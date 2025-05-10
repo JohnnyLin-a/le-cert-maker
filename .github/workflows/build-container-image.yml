@@ -5,6 +5,7 @@ on:
     branches: ["master"]
     paths:
       - Dockerfile
+  workflow_dispatch:
 
 jobs:
   build:
@@ -69,10 +70,12 @@ jobs:
 
           docker manifest create "ghcr.io/${owner}/le-cert-maker:latest" \
             --amend "ghcr.io/${owner}/le-cert-maker:arm64-${{ github.sha }}" \
+            --amend "ghcr.io/${owner}/le-cert-maker:arm32-${{ github.sha }}" \
             --amend "ghcr.io/${owner}/le-cert-maker:x64-${{ github.sha }}"
           docker manifest push "ghcr.io/${owner}/le-cert-maker:latest"
 
           docker manifest create "ghcr.io/${owner}/le-cert-maker:${{ github.sha }}" \
             --amend "ghcr.io/${owner}/le-cert-maker:arm64-${{ github.sha }}" \
+            --amend "ghcr.io/${owner}/le-cert-maker:arm32-${{ github.sha }}" \
             --amend "ghcr.io/${owner}/le-cert-maker:x64-${{ github.sha }}"
           docker manifest push "ghcr.io/${owner}/le-cert-maker:${{ github.sha }}"
