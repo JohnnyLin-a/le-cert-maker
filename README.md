@@ -8,3 +8,11 @@ docker compose run --entrypoint certbot --rm -it certbot certonly
 # When using webroot, use path /webroot
 docker compose up -d
 ```
+
+# With OVH provider:
+See documentation here: https://certbot-dns-ovh.readthedocs.io/en/stable/#credentials
+
+```s
+docker compose exec --rm --entrypoint sh certbot
+certbot certonly --dns-ovh --dns-ovh-credentials /root/.auth.ini -d "*.your-domain.xyz"
+```

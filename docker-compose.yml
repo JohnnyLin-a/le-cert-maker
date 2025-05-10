@@ -1,11 +1,12 @@
-version: '2.4'
-
 services:
   certbot:
-    image: certbot/certbot:latest
+    image: ghcr.io/johnnylin-a/le-cert-maker:latest
+    # build:
+    #   context: .
     restart: unless-stopped
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt
       - /var/lib/letsencrypt:/var/lib/letsencrypt
       - /usr/share/nginx/html:/webroot
+      - ./.auth.ini:/root/.auth.ini:ro
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 24h & wait $${!}; done;'"

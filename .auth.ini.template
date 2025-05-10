@@ -1,0 +1,11 @@
+; GET /domain/zone/
+; GET /domain/zone/<REQUIRED_DOMAIN>/*
+; PUT /domain/zone/<REQUIRED_DOMAIN>/*
+; POST /domain/zone/<REQUIRED_DOMAIN>/*
+; DELETE /domain/zone/<REQUIRED_DOMAIN>/*
+; ^ auth scope
+; OVH API credentials used by Certbot
+dns_ovh_endpoint = ovh-eu
+dns_ovh_application_key = MDAwMDAwMDAwMDAw
+dns_ovh_application_secret = MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
+dns_ovh_consumer_key = MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw
