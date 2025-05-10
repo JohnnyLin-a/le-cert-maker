@@ -13,6 +13,9 @@ docker compose up -d
 See documentation here: https://certbot-dns-ovh.readthedocs.io/en/stable/#credentials
 
 ```s
-docker compose exec --rm --entrypoint sh certbot
+docker compose run --rm --entrypoint sh certbot
 certbot certonly --dns-ovh --dns-ovh-credentials /root/.auth.ini -d "*.your-domain.xyz"
+# Follow on-screen instructions for one time run setup
+exit
+docker compose up -d
 ```
