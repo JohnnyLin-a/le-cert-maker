@@ -9,4 +9,5 @@ services:
       - /var/lib/letsencrypt:/var/lib/letsencrypt
       - /usr/share/nginx/html:/webroot
       - ./.auth.ini:/root/.auth.ini:ro
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 24h & wait $${!}; done;'"
+      - ./deploy-hook.sh:/deploy-hook.sh:ro
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --deploy-hook \"/bin/sh -c /deploy-hook.sh\"; sleep 24h & wait $${!}; done;'"
