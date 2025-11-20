@@ -47,12 +47,13 @@ jobs:
             --output push-by-digest=true,type=image,push=true \
             -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}" \
             --provenance false \
-            --iidfile image_id.txt \
+            --iidfile ${{ runner.temp }}/image_id.txt \
             .
       - name: Write image sha to output
         id: write-image-sha
         run: |
-          echo "${{ matrix.build-targets.manifest-name }}_sha=$(cat image_id.txt)" >> "$GITHUB_OUTPUT"
+          cat ${{ runner.temp }}/image_id.txt
+          echo "${{ matrix.build-targets.manifest-name }}_sha=$(cat ${{ runner.temp }}/image_id.txt)" >> "$GITHUB_OUTPUT"
     outputs:
       x64_sha: ${{ steps.write-image-sha.outputs.x64_sha }}
       arm64_sha: ${{ steps.write-image-sha.outputs.arm64_sha }}
@@ -77,6 +78,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge images
         run: |
+          docker pull "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}"
+          docker pull "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}"
+          docker pull "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
+
           docker manifest create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}" \
             --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
             --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
