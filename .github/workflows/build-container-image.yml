@@ -77,7 +77,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge images
         run: |
-          docker buildx imagetools create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
+          docker buildx imagetools create -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}" \
+            "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
+            "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
+            "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
