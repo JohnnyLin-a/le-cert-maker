@@ -40,20 +40,18 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build image
-        run: |
-          docker buildx build \
-            --platform linux/${{ matrix.build-targets.arch }} \
-            --output push-by-digest=true,type=image,push=true \
-            -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}" \
-            --provenance false \
-            --iidfile ${{ runner.temp }}/image_id.txt \
-            .
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        with:
+          tags: ghcr.io/${{ github.repository_owner }}/${{ env.BUILD_IMAGE_NAME }}
+          platforms: linux/${{ matrix.build-targets.arch }}
+          outputs: type=image,push-by-digest=true,push=true
       - name: Write image sha to output
         id: write-image-sha
         run: |
-          cat ${{ runner.temp }}/image_id.txt
-          echo "${{ matrix.build-targets.manifest-name }}_sha=$(cat ${{ runner.temp }}/image_id.txt)" >> "$GITHUB_OUTPUT"
+          echo "${{ steps.build.outputs.digest }}"
+          echo "${{ matrix.build-targets.manifest-name }}_sha=${{ steps.build.outputs.digest }}" >> "$GITHUB_OUTPUT"
     outputs:
       x64_sha: ${{ steps.write-image-sha.outputs.x64_sha }}
       arm64_sha: ${{ steps.write-image-sha.outputs.arm64_sha }}
@@ -65,11 +63,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        image-tag:
-          - latest
-          - ${{ github.sha }}
     steps:
       - uses: docker/login-action@v3
         with:
@@ -78,8 +71,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge images
         run: |
-          docker buildx imagetools create -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}" \
+          docker buildx imagetools create -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:latest" \
+            -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ github.sha }}" \
             "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
             "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
             "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
-          docker manifest push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}"
