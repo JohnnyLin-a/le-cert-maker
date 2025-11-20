@@ -70,13 +70,13 @@ jobs:
       - name: Merge images
         run: |
           docker manifest create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:latest" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ needs.build.outputs.x64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ needs.build.outputs.arm64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ needs.build.outputs.arm32_sha }}"
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.x64_sha }}" \
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm64_sha }}" \
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm32_sha }}"
           docker manifest push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:latest"
 
           docker manifest create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ github.sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ needs.build.outputs.x64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ needs.build.outputs.arm64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ needs.build.outputs.arm32_sha }}"
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.x64_sha }}" \
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm64_sha }}" \
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm32_sha }}"
           docker manifest push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ github.sha }}"
