@@ -7,6 +7,9 @@ on:
       - Dockerfile
   workflow_dispatch:
 
+env:
+  BUILD_IMAGE_NAME: ${{ github.event.repository.name }} # default le-cert-maker
+
 jobs:
   build:
     strategy:
@@ -41,8 +44,8 @@ jobs:
         run: |
           docker buildx build \
             --platform linux/${{ matrix.build-targets.arch }} \
-            --push \
-            -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ matrix.build-targets.manifest-name }}-${{ github.sha }}" \
+            --output push-by-digest=true,type=image,push=true \
+            -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}" \
             --provenance false \
             --iidfile image_id.txt \
             .
@@ -61,6 +64,11 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        image-tag:
+          - latest
+          - ${{ github.sha }}
     steps:
       - uses: docker/login-action@v3
         with:
@@ -69,14 +77,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge images
         run: |
-          docker manifest create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:latest" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.x64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm32_sha }}"
-          docker manifest push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:latest"
-
-          docker manifest create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ github.sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.x64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm64_sha }}" \
-            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker@${{ needs.build.outputs.arm32_sha }}"
-          docker manifest push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/le-cert-maker:${{ github.sha }}"
+          docker manifest create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}" \
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
+            --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
+          docker manifest push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}"
