@@ -6,7 +6,6 @@ on:
     paths:
       - Dockerfile
   workflow_dispatch:
-
 env:
   BUILD_IMAGE_NAME: ${{ github.event.repository.name }} # default le-cert-maker
 
@@ -78,12 +77,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge images
         run: |
-          docker pull "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}"
-          docker pull "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}"
-          docker pull "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
-
-          docker manifest create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}" \
+          docker buildx imagetools create "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}" \
             --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
             --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
             --amend "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
-          docker manifest push "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ matrix.image-tag }}"
