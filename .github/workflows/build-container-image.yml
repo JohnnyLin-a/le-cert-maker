@@ -27,12 +27,12 @@ jobs:
     name: Build Container Image for ${{ matrix.build-targets.manifest-name }}
     runs-on: ${{ matrix.build-targets.label }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: ${{ github.sha }}
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
+      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -40,15 +40,21 @@ jobs:
       - name: Build image
         run: |
           # First, lowercase-ify owner
-          export owner=${{ github.repository_owner }}
-          export owner=${owner,,}
+          export owner=${${{ github.repository_owner }},,}
           docker buildx build \
             --platform linux/${{ matrix.build-targets.arch }} \
             --push \
-            -t "ghcr.io/${owner}/le-cert-maker:${{ matrix.build-targets.manifest-name }}-${{ github.sha }}" \
-            -t "ghcr.io/${owner}/le-cert-maker:${{ matrix.build-targets.manifest-name }}-latest" \
             --provenance false \
+            --iidfile image_id.txt \
             .
+      - name: Write image sha to output
+        id: write-image-sha
+        run: |
+          echo "${{ matrix.build-targets.manifest-name }}_sha=$(cat image_id.txt)" >> "$GITHUB_OUTPUT"
+    outputs:
+      x64_sha: ${{ steps.write-image-sha.outputs.x64_sha }}
+      arm64_sha: ${{ steps.write-image-sha.outputs.arm64_sha }}
+      arm32_sha: ${{ steps.write-image-sha.outputs.arm32_sha }}
   merge-container:
     runs-on: ubuntu-latest
     needs:
@@ -65,17 +71,16 @@ jobs:
       - name: Merge images
         run: |
           # First, lowercase-ify owner
-          export owner=${{ github.repository_owner }}
-          export owner=${owner,,}
+          export owner=${${{ github.repository_owner }},,}
 
           docker manifest create "ghcr.io/${owner}/le-cert-maker:latest" \
-            --amend "ghcr.io/${owner}/le-cert-maker:arm64-${{ github.sha }}" \
-            --amend "ghcr.io/${owner}/le-cert-maker:arm32-${{ github.sha }}" \
-            --amend "ghcr.io/${owner}/le-cert-maker:x64-${{ github.sha }}"
+            --amend "ghcr.io/${owner}/le-cert-maker:${{ needs.build.outputs.x64_sha }}" \
+            --amend "ghcr.io/${owner}/le-cert-maker:${{ needs.build.outputs.arm64_sha }}" \
+            --amend "ghcr.io/${owner}/le-cert-maker:${{ needs.build.outputs.arm32_sha }}"
           docker manifest push "ghcr.io/${owner}/le-cert-maker:latest"
 
           docker manifest create "ghcr.io/${owner}/le-cert-maker:${{ github.sha }}" \
-            --amend "ghcr.io/${owner}/le-cert-maker:arm64-${{ github.sha }}" \
-            --amend "ghcr.io/${owner}/le-cert-maker:arm32-${{ github.sha }}" \
-            --amend "ghcr.io/${owner}/le-cert-maker:x64-${{ github.sha }}"
+            --amend "ghcr.io/${owner}/le-cert-maker:${{ needs.build.outputs.x64_sha }}" \
+            --amend "ghcr.io/${owner}/le-cert-maker:${{ needs.build.outputs.arm64_sha }}" \
+            --amend "ghcr.io/${owner}/le-cert-maker:${{ needs.build.outputs.arm32_sha }}"
           docker manifest push "ghcr.io/${owner}/le-cert-maker:${{ github.sha }}"
