@@ -40,11 +40,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set REPO env variable as lowercase repository name
+        run: |
+          echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
         with:
-          tags: ghcr.io/${{ github.repository_owner }}/${{ env.BUILD_IMAGE_NAME }}
+          tags: ghcr.io/${{ env.REPO }}/${{ env.BUILD_IMAGE_NAME }}
           platforms: linux/${{ matrix.build-targets.arch }}
           outputs: type=image,push-by-digest=true,push=true
       - name: Write image sha to output
@@ -64,7 +67,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
