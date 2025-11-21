@@ -8,47 +8,43 @@ on:
       - '.github/workflows/build-container-image.yml'
   workflow_dispatch:
 env:
-  BUILD_IMAGE_NAME: ${{ github.event.repository.name }} # default le-cert-maker
+  BUILD_IMAGE_NAME: ghcr.io/johnnylin-a/le-cert-maker
+  CR_HOST: ghcr.io
+  CR_USERNAME: ${{ github.repository_owner }}
 
 jobs:
   build:
     strategy:
       matrix:
         build-targets:
-          - label: ubuntu-latest
-            arch: amd64
+          - runner: ubuntu-latest
+            platform: linux/amd64
             manifest-name: x64
-          - label: ubuntu-24.04-arm
-            arch: arm64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
             manifest-name: arm64
-          - label: ubuntu-24.04-arm
-            arch: arm/v7
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm/v7
             manifest-name: arm32
     permissions:
       contents: read
       packages: write
     name: Build Container Image for ${{ matrix.build-targets.manifest-name }}
-    runs-on: ${{ matrix.build-targets.label }}
+    runs-on: ${{ matrix.build-targets.runner }}
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
-        with:
-          ref: ${{ github.sha }}
-      # - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
       - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3
       - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          registry: ${{ env.CR_HOST }}
+          username: ${{ env.CR_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set REPO env variable as lowercase repository name
-        run: |
-          echo "REPO=${GITHUB_REPOSITORY,,}" >>${GITHUB_ENV}
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
         with:
-          tags: ghcr.io/${{ env.REPO }}/${{ env.BUILD_IMAGE_NAME }}
-          platforms: linux/${{ matrix.build-targets.arch }}
+          tags: ${{ env.BUILD_IMAGE_NAME }}
+          platforms: ${{ matrix.build-targets.platform }}
           outputs: type=image,push-by-digest=true,push=true
       - name: Write image sha to output
         id: write-image-sha
@@ -69,13 +65,13 @@ jobs:
     steps:
       - uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
         with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
+          registry: ${{ env.CR_HOST }}
+          username: ${{ env.CR_USERNAME }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge images
         run: |
-          docker buildx imagetools create -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:latest" \
-            -t "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}:${{ github.sha }}" \
-            "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
-            "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
-            "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
+          docker buildx imagetools create -t "${{ env.BUILD_IMAGE_NAME }}:latest" \
+            -t "${{ env.BUILD_IMAGE_NAME }}:${{ github.sha }}" \
+            "${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.x64_sha }}" \
+            "${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm64_sha }}" \
+            "${{ env.BUILD_IMAGE_NAME }}@${{ needs.build.outputs.arm32_sha }}"
