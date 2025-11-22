@@ -9,6 +9,17 @@ docker compose run --entrypoint certbot --rm -it certbot certonly
 docker compose up -d
 ```
 
+# With Cloudflare provider:
+See documentation here: https://certbot-dns-cloudflare.readthedocs.io/en/stable/#credentials
+```s
+docker compose run --rm --entrypoint sh certbot
+certbot certonly --dns-cloudflare --dns-cloudflare-credentials /root/.auth.ini -d "*.your-domain.xyz"
+# Follow on-screen instructions for one time run setup
+exit
+docker compose up -d
+```
+
+
 # With OVH provider:
 See documentation here: https://certbot-dns-ovh.readthedocs.io/en/stable/#credentials
 
