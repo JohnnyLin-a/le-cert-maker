@@ -42,6 +42,8 @@ jobs:
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6
+        env:
+          DOCKER_BUILD_RECORD_UPLOAD: 'false'
         with:
           tags: ${{ env.BUILD_IMAGE_NAME }}
           platforms: ${{ matrix.build-targets.platform }}
