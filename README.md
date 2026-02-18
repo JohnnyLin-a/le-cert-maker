@@ -1,6 +1,10 @@
 # le-cert-maker
 Configurable letsencrypt certificate generator for multiple service usage
 
+# Other useful info:
+`iptables-w-docker-rules.sh` contains rules to filter specific cloudflare ip addresses and ports 443 and 80.  
+Make sure the firewall is correctly configured!
+
 Initial setup:
 ```s
 docker compose run --entrypoint certbot --rm -it certbot certonly
